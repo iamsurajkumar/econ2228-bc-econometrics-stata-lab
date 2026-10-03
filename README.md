@@ -11,9 +11,9 @@ marimo notebook that runs in the browser.
 | 1 | Introduction to Stata | |
 | 2 | Do-files, descriptive statistics and joins (WASDE mini-project) | |
 | 3 | Merging and reshaping data | |
-| 4 | Compare a school with itself (pooled OLS vs fixed effects) | Papke (2005) |
-| 5 | Does school spending raise test scores? | Papke (2005), *J. Public Econ.* |
-| 6 | Do smaller classes help kids learn? | Krueger (1999), *QJE* |
+| 4 | Compare a school with itself (pooled OLS vs fixed effects) [![Open in molab](https://marimo.io/molab-shield.svg)](https://molab.marimo.io/github/iamsurajkumar/econ2228-bc-econometrics-stata-lab/blob/main/lectures/week-04/week04_pooled_vs_fe.py) | Papke (2005) |
+| 5 | Does school spending raise test scores? [![Open in molab](https://marimo.io/molab-shield.svg)](https://molab.marimo.io/github/iamsurajkumar/econ2228-bc-econometrics-stata-lab/blob/main/lectures/week-05/week05_visuals.py) | Papke (2005), *J. Public Econ.* |
+| 6 | Do smaller classes help kids learn? [![Open in molab](https://marimo.io/molab-shield.svg)](https://molab.marimo.io/github/iamsurajkumar/econ2228-bc-econometrics-stata-lab/blob/main/lectures/week-06/week06_star_notebook.py) | Krueger (1999), *QJE* |
 
 ## Layout
 
@@ -34,6 +34,7 @@ listed in `scripts/publish_list.txt`.
 # On either machine (Mac: ~/code/..., omabox: ~/code/...):
 git pull
 scripts/sync_from_dropbox.sh          # copy the listed files from Dropbox into lectures/
+scripts/export_sessions.sh            # save notebook outputs so molab previews show results
 git add -A && git commit -m "Week N" && git push
 ```
 
