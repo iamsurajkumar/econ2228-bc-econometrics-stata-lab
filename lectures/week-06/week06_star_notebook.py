@@ -20,7 +20,7 @@
 
 import marimo
 
-__generated_with = "0.24.0"
+__generated_with = "0.25.1"
 app = marimo.App(width="medium")
 
 
@@ -103,7 +103,7 @@ def _(kids, np):
         idx = rng.integers(0, N_ALL, size=(reps, n))
         return score_all[idx], small_all[idx]
 
-    return GAP_ALL, draw_samples, gap_and_se, score_all, small_all
+    return GAP_ALL, draw_samples, gap_and_se
 
 
 @app.cell
@@ -125,46 +125,69 @@ def _(mo):
 @app.cell
 def _(kids, mo):
     child = mo.ui.slider(0, len(kids) - 1, value=4, label="Pick a child (row number)")
-    child
-    return (child,)
+    zoom = mo.ui.slider(0, 100, value=0, step=5, label="Zoom in on the averages (%)")
+    mo.vstack([child, zoom])
+    return child, zoom
 
 
 @app.cell
-def _(alt, child, kids, mo, np, pd):
+def _(alt, child, kids, mo, np, zoom):
     rng0 = np.random.default_rng(1)
     dots = kids.assign(x=kids["small"] + rng0.uniform(-0.25, 0.25, len(kids)))
-    means = kids.groupby("small", as_index=False)["score"].mean()
+    means = kids.groupby("small", as_index=False)["score"].agg(
+        score="mean", sd="std", n="count")
+    means["lo"] = means["score"] - 1.96 * means["sd"] / np.sqrt(means["n"])
+    means["hi"] = means["score"] + 1.96 * means["sd"] / np.sqrt(means["n"])
     me = dots.iloc[[child.value]].copy()
     me["fitted"] = means.set_index("small").loc[me["small"], "score"].to_numpy()
+
+    # Zoom: shrink the y-axis window around the middle of the two averages,
+    # from the full cloud (half-width 350 points) down to 25 points.
+    mid = means["score"].mean()
+    half = 350 * (25 / 350) ** (zoom.value / 100)
+    yscale = alt.Scale(domain=[mid - half, mid + half])
 
     xscale = alt.Scale(domain=[-0.6, 1.6])
     base_x = alt.X("x:Q", scale=xscale,
                    axis=alt.Axis(values=[0, 1], labelExpr="datum.value == 0 ? 'regular (0)' : 'small (1)'"),
                    title=None)
-    cloud = alt.Chart(dots).mark_circle(size=8, opacity=0.25, color="#7f7f7f").encode(
-        x=base_x, y=alt.Y("score:Q", title="Reading + math score", scale=alt.Scale(zero=False)))
-    bars = alt.Chart(means).mark_tick(orient="horizontal", thickness=5, size=140, color="#ff7f0e").encode(
+    cloud = alt.Chart(dots).mark_circle(size=8, opacity=0.25, color="#7f7f7f", clip=True).encode(
+        x=base_x, y=alt.Y("score:Q", title="Reading + math score", scale=yscale))
+    bars = alt.Chart(means).mark_tick(orient="horizontal", thickness=5, size=140, color="#ff7f0e", clip=True).encode(
         x=alt.X("small:Q", scale=xscale), y="score:Q")
-    line = alt.Chart(means).mark_line(color="#d62728", strokeWidth=3).encode(
+    ci_bars = alt.Chart(means).mark_rule(color="#ff7f0e", strokeWidth=3, clip=True).encode(
+        x=alt.X("small:Q", scale=xscale), y="lo:Q", y2="hi:Q")
+    line = alt.Chart(means).mark_line(color="#d62728", strokeWidth=3, clip=True).encode(
         x=alt.X("small:Q", scale=xscale), y="score:Q")
-    seg = alt.Chart(me).mark_rule(color="#1f77b4", strokeWidth=3).encode(
+    seg = alt.Chart(me).mark_rule(color="#1f77b4", strokeWidth=3, clip=True).encode(
         x="x:Q", y="score:Q", y2="fitted:Q")
-    pt = alt.Chart(me).mark_circle(size=140, color="#1f77b4").encode(x="x:Q", y="score:Q")
-    chart_two = (cloud + bars + line + seg + pt).properties(width=520, height=380)
+    pt = alt.Chart(me).mark_circle(size=140, color="#1f77b4", clip=True).encode(x="x:Q", y="score:Q")
+    chart_two = (cloud + ci_bars + bars + line + seg + pt).properties(width=520, height=380)
 
     m0, m1 = means["score"].tolist()
     row = me.iloc[0]
-    mo.hstack([chart_two, mo.md(f"""
-    **Regular average:** {m0:.1f}<br>
-    **Small average:** {m1:.1f}<br>
-    **Gap = slope:** {m1 - m0:.1f}
+    zoom_note = ("Full view: the gap is small next to how much children differ."
+                 if zoom.value == 0 else
+                 f"Zoomed in: the y-axis now spans only {2 * half:.0f} points, so the same "
+                 f"13.9-point gap looks steep. The orange vertical bars are 95% intervals "
+                 f"for each average; they do not overlap.")
+    stats1 = mo.hstack([
+        mo.stat(f"{m0:.1f}", label="Regular average", caption="fitted value when small = 0"),
+        mo.stat(f"{m1:.1f}", label="Small average", caption="fitted value when small = 1"),
+        mo.stat(f"{m1 - m0:.1f}", label="Gap = slope", caption="the regression coefficient"),
+    ], justify="start", gap=2)
+    stats_child = mo.hstack([
+        mo.stat(f"{row['score']:.0f}", label=f"This child's score ({row['class']} class)"),
+        mo.stat(f"{row['fitted']:.1f}", label="Fitted value", caption="their group's average"),
+        mo.stat(f"{row['score'] - row['fitted']:+.1f}", label="Residual", caption="actual − fitted"),
+    ], justify="start", gap=2)
 
-    ---
-    **This child** ({row['class']} class)<br>
-    Actual score: {row['score']:.0f}<br>
-    Fitted value (group average): {row['fitted']:.1f}<br>
-    **Residual:** {row['score'] - row['fitted']:+.1f}
-    """)], align="center")
+    mo.vstack([
+        chart_two.properties(width=640),
+        stats1,
+        stats_child,
+        mo.md(zoom_note),
+    ])
     return
 
 
@@ -182,7 +205,7 @@ def _(mo):
     Pretend we could only afford to test **n** children. We pick n kids at
     random from the 3,743 (names out of a hat, each name put back) and
     compute the small–regular gap. Then we do it
-    again, and again: **500 reruns**.
+    again, and again: **R reruns** (you choose R with the second slider).
 
     The reruns don't agree. **How spread out they are is exactly what the
     standard error measures.**
@@ -193,15 +216,28 @@ def _(mo):
 @app.cell
 def _(mo):
     n_rerun = mo.ui.slider(50, 2000, value=200, step=50, label="Children tested in each rerun (n)")
-    redraw2 = mo.ui.button(value=0, on_click=lambda v: v + 1, label="Rerun 500 more times")
-    mo.hstack([n_rerun, redraw2], justify="start", gap=2)
-    return n_rerun, redraw2
+    reps2 = mo.ui.slider(steps=[1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000], value=500,
+                         label="Number of reruns (R)")
+    redraw2 = mo.ui.button(value=0, on_click=lambda v: v + 1, label="Draw a fresh set of reruns")
+    mo.hstack([n_rerun, reps2, redraw2], justify="start", gap=2)
+    return n_rerun, redraw2, reps2
 
 
 @app.cell
-def _(GAP_ALL, alt, draw_samples, gap_and_se, mo, n_rerun, np, pd, redraw2):
+def _(
+    GAP_ALL,
+    alt,
+    draw_samples,
+    gap_and_se,
+    mo,
+    n_rerun,
+    np,
+    pd,
+    redraw2,
+    reps2,
+):
     rng2 = np.random.default_rng(200 + redraw2.value)
-    y2, d2 = draw_samples(rng2, n_rerun.value, 500)
+    y2, d2 = draw_samples(rng2, n_rerun.value, reps2.value)
     gaps2, ses2 = gap_and_se(y2, d2)
     reruns = pd.DataFrame({"gap": gaps2})
 
@@ -213,19 +249,88 @@ def _(GAP_ALL, alt, draw_samples, gap_and_se, mo, n_rerun, np, pd, redraw2):
         color="black", strokeDash=[6, 4], strokeWidth=2).encode(x="g:Q")
     zero2 = alt.Chart(pd.DataFrame({"g": [0]})).mark_rule(color="#d62728").encode(x="g:Q")
 
-    mo.hstack([(hist2 + truth2 + zero2).properties(width=520, height=300), mo.md(f"""
-    **Spread of the 500 gaps** (their SD):
-    ## {gaps2.std():.1f} points
+    n_small2 = d2.sum(axis=1)   # kids drawn from small classes, one count per rerun
+    stats2 = mo.hstack([
+        mo.stat(f"{n_small2[0]} / {n_rerun.value - n_small2[0]}",
+                label="Small / regular kids in rerun #1",
+                caption=(f"across reruns: {n_small2.min()}–{n_small2.max()} small"
+                         if reps2.value > 1 else "the split is luck too")),
+        mo.stat(f"{gaps2.std():.1f}" if reps2.value > 1 else "?",
+                label=f"Spread of the {reps2.value:,} gap{'s' if reps2.value > 1 else ''} (SD)",
+                caption="how much reruns disagree" if reps2.value > 1
+                else "one study: you can't see the spread"),
+        mo.stat(f"{ses2.mean():.1f}", label="Average SE Stata prints",
+                caption="computed from ONE rerun"),
+        mo.stat(f"{(gaps2 < 0).mean():.0%}", label="Reruns with a gap below zero",
+                caption="would wrongly say small classes hurt"),
+    ], justify="start", gap=2)
 
-    **Average SE that Stata would print** in one rerun:
-    ## {ses2.mean():.1f} points
+    mo.vstack([
+        (hist2 + truth2 + zero2).properties(width=640, height=300),
+        stats2,
+        mo.md("The first two numbers match: **one sample's SE predicts how much the "
+              "answer would move if we reran the study.** Dashed line = full-data gap "
+              "(13.9); red line = zero."),
+    ])
+    return
 
-    The two match: one sample's SE predicts how much the answer
-    would move if we reran the study.
 
-    Dashed line = the full-data gap (13.9). Red line = zero.<br>
-    Share of reruns with a gap below zero: **{(gaps2 < 0).mean():.0%}**
-    """)], align="center")
+@app.cell(hide_code=True)
+def _(mo):
+    mo.accordion({"📐 The math: why does the spread shrink? (and why more reruns does NOT shrink it)": mo.md(r"""
+    **Step 1: one group's average.** If children's scores vary with standard deviation $\sigma$
+    (here $\sigma \approx 75$ points), the average of $m$ randomly drawn children varies by
+
+    $$
+    \operatorname{SD}(\bar y) = \frac{\sigma}{\sqrt{m}}.
+    $$
+
+    Averaging cancels out luck: a lucky high child is offset by an unlucky low one.
+
+    **Step 2: the gap is a difference of two independent averages.** With $n_1$ kids in small
+    classes and $n_0$ in regular classes, variances add:
+
+    $$
+    \operatorname{Var}(\bar y_1 - \bar y_0) = \frac{\sigma^2}{n_1} + \frac{\sigma^2}{n_0}
+    \quad\Longrightarrow\quad
+    \operatorname{SE}(\text{gap}) = \sigma\sqrt{\frac{1}{n_1} + \frac{1}{n_0}}.
+    $$
+
+    This is exactly the SE Stata prints for the coefficient on `small` (it plugs in the
+    residual SD for $\sigma$).
+
+    **Step 3: plug in roughly half the kids in each group,** $n_1 \approx n_0 \approx n/2$:
+
+    $$
+    \operatorname{SE}(\text{gap}) \approx \sigma\sqrt{\frac{2}{n} + \frac{2}{n}} = \frac{2\sigma}{\sqrt{n}}.
+    $$
+
+    | children per rerun $n$ | $2 \times 75 / \sqrt{n}$ |
+    |---:|---:|
+    | 50 | 21.2 |
+    | 200 | 10.6 |
+    | 800 | 5.3 |
+    | 2,000 | 3.4 |
+
+    **Four times as many children halves the SE.** That is the $1/\sqrt{n}$ rule.
+
+    ---
+
+    **What about the number of reruns $R$?** It does **not** change the true spread. Each rerun is
+    still a study of $n$ children, so each one wobbles by $2\sigma/\sqrt{n}$ no matter how many
+    reruns we stack up. What $R$ changes is how *well we can see* that spread:
+
+    $$
+    \text{our measured SD} \approx \frac{2\sigma}{\sqrt{n}} \;\pm\; \frac{2\sigma/\sqrt{n}}{\sqrt{2R}}.
+    $$
+
+    With $R = 20$ the histogram is ragged and the measured spread can be off by about 16%; with
+    $R = 5000$ it is smooth and off by about 1%. **More children per study ($n$) makes each answer
+    more precise. More reruns ($R$) only gives a sharper picture of the same histogram.**
+
+    *Try it:* fix $n = 200$ and move $R$ from 10 to 5000: the spread card stays near 10.6.
+    Then fix $R$ and move $n$: the spread falls.
+    """)})
     return
 
 
@@ -260,7 +365,18 @@ def _(mo):
 
 
 @app.cell
-def _(GAP_ALL, alt, draw_samples, gap_and_se, level, mo, n_ci, np, pd, redraw3):
+def _(
+    GAP_ALL,
+    alt,
+    draw_samples,
+    gap_and_se,
+    level,
+    mo,
+    n_ci,
+    np,
+    pd,
+    redraw3,
+):
     rng3 = np.random.default_rng(305 + redraw3.value)
     y3, d3 = draw_samples(rng3, n_ci.value, 100)
     gaps3, ses3 = gap_and_se(y3, d3)
@@ -287,15 +403,21 @@ def _(GAP_ALL, alt, draw_samples, gap_and_se, level, mo, n_ci, np, pd, redraw3):
     zero3 = alt.Chart(pd.DataFrame({"g": [0]})).mark_rule(color="#d62728").encode(x="g:Q")
 
     hits3 = int((ci["covers"] == "yes").sum())
-    mo.hstack([(bars3 + dots3 + truth3 + zero3).properties(width=520, height=420), mo.md(f"""
-    **{hits3} of 100** intervals cover the full-data gap.
+    stats3 = mo.hstack([
+        mo.stat(f"{hits3} of 100", label="Intervals that cover 13.9",
+                caption=f"promised: about {level.selected_key.rstrip('%')}"),
+        mo.stat(f"{100 - hits3}", label="Misses (red bars)",
+                caption="unlucky samples, not mistakes"),
+        mo.stat(f"{int(ci['above zero'].sum())} of 100", label="Lie entirely above zero",
+                caption="\"significantly above zero\""),
+    ], justify="start", gap=2)
 
-    **{int(ci['above zero'].sum())} of 100** lie entirely above zero
-    (in these samples, the gap is "significantly above zero").
-
-    Press the button a few times: the count of hits stays near
-    {level.selected_key.rstrip('%')}.
-    """)], align="center")
+    mo.vstack([
+        (bars3 + dots3 + truth3 + zero3).properties(width=640, height=420),
+        stats3,
+        mo.md("Press the button a few times: the count of hits stays near the promised level. "
+              "The promise is about the **method**, not about any one bar."),
+    ])
     return
 
 
@@ -347,18 +469,21 @@ def _(alt, draw_samples, erfc, gap_and_se, mo, n_p, np, pd, redraw4, sqrt):
     ours = alt.Chart(pd.DataFrame({"g": [gap4, -gap4]})).mark_rule(
         color="black", strokeWidth=2).encode(x="g:Q")
 
-    mo.hstack([(hist4 + ours).properties(width=520, height=300), mo.md(f"""
-    **Our sample's real gap:** {gap4:.1f} points<br>
-    (SE {se4:.1f}, t = {t4:.2f})
+    stats4 = mo.hstack([
+        mo.stat(f"{gap4:.1f}", label="Our sample's real gap",
+                caption=f"SE {se4:.1f}, t = {t4:.2f}"),
+        mo.stat(f"{p_shuffle:.3f}", label="p from 2,000 shuffles",
+                caption="share of red bars"),
+        mo.stat(f"{p_formula:.3f}", label="p from the t formula",
+                caption="what Stata prints"),
+    ], justify="start", gap=2)
 
-    **Shuffles at least that far from zero:**
-    ## p ≈ {p_shuffle:.3f}
-
-    **p-value from the t formula** (what Stata prints):
-    ## p ≈ {p_formula:.3f}
-
-    The two agree. A small p means luck alone rarely does this.
-    """)], align="center")
+    mo.vstack([
+        (hist4 + ours).properties(width=640, height=300),
+        stats4,
+        mo.md("The two p-values agree. A small p means **luck alone rarely produces a gap "
+              "this big** (black lines)."),
+    ])
     return
 
 
