@@ -8,6 +8,7 @@ marimo notebook that runs in the browser.
 
 | Week | Question | Paper |
 |---|---|---|
+| 2 | Do-files, descriptive statistics and joins (WASDE mini-project; do-files only) | |
 | 3 | Merging and reshaping data | |
 | 4 | Compare a school with itself (pooled OLS vs fixed effects) [![Open in molab](https://marimo.io/molab-shield.svg)](https://molab.marimo.io/github/iamsurajkumar/econ2228-bc-econometrics-stata-lab/blob/main/lectures/week-04/week04_pooled_vs_fe.py) | Papke (2005) |
 | 5 | Does school spending raise test scores? [![Open in molab](https://marimo.io/molab-shield.svg)](https://molab.marimo.io/github/iamsurajkumar/econ2228-bc-econometrics-stata-lab/blob/main/lectures/week-05/week05_visuals.py) | Papke (2005), *J. Public Econ.* |
