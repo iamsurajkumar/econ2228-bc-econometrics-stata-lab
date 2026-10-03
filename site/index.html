@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ECON2228 Stata Lab</title>
+<meta name="description" content="Boston College ECON2228 Econometrics: Stata lab materials, slides, do-files, data and interactive notebooks.">
+<style>
+  :root {
+    --bg: #fcfcfb; --surface: #ffffff; --ink: #0b0b0b; --ink-2: #52514e; --muted: #8a8984;
+    --line: #e6e5e1; --accent: #2a78d6; --accent-ink: #ffffff; --tag: #eef4fc; --soon: #f6f5f2;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #1a1a19; --surface: #232322; --ink: #ffffff; --ink-2: #c3c2b7; --muted: #8f8e88;
+      --line: #383835; --accent: #3987e5; --accent-ink: #ffffff; --tag: #1f2f45; --soon: #262625;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #1a1a19; --surface: #232322; --ink: #ffffff; --ink-2: #c3c2b7; --muted: #8f8e88;
+    --line: #383835; --accent: #3987e5; --accent-ink: #ffffff; --tag: #1f2f45; --soon: #262625;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+         font: 16px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+  main { max-width: 860px; margin: 0 auto; padding: 40px 16px 64px; }
+  header p { color: var(--ink-2); margin: 6px 0 0; }
+  h1 { font-size: 1.9rem; line-height: 1.2; margin: 0; }
+  h2 { font-size: 1.15rem; margin: 40px 0 12px; }
+  a { color: var(--accent); }
+  .how { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 18px; margin-top: 24px; }
+  .how ol { margin: 6px 0 0; padding-left: 20px; color: var(--ink-2); }
+  .week { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; margin: 12px 0; }
+  .week .label { font-size: .8rem; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+  .week h3 { margin: 2px 0 4px; font-size: 1.08rem; }
+  .week p { margin: 0 0 10px; color: var(--ink-2); }
+  .links { display: flex; flex-wrap: wrap; gap: 8px; }
+  .links a { text-decoration: none; font-size: .88rem; padding: 4px 10px; border-radius: 6px;
+             background: var(--tag); color: var(--ink); border: 1px solid var(--line); }
+  .links a.nb { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+  .note { font-size: .85rem; color: var(--muted); margin-top: 8px; }
+  .soon { background: var(--soon); border: 1px dashed var(--line); border-radius: 10px; padding: 12px 18px; margin: 10px 0; }
+  .soon b { color: var(--ink); }
+  .soon span { color: var(--ink-2); }
+  footer { margin-top: 48px; color: var(--muted); font-size: .85rem; }
+</style>
+</head>
+<body>
+<main>
+<header>
+  <h1>ECON2228 Econometrics: Stata Lab</h1>
+  <p>Boston College, Fall 2026 · Suraj Kumar's lab sections · every lab answers one policy question with real data from a published study.</p>
+</header>
+
+<div class="how">
+  <b>How to use this page</b>
+  <ol>
+    <li><b>Slides</b>: read them before or after the lab.</li>
+    <li><b>Do-files</b>: download, change the <code>cd</code> line at the top to your own folder, and run in Stata from top to bottom.</li>
+    <li><b>Notebooks</b> (blue buttons): open in your browser, nothing to install. The first load takes about 30 seconds.</li>
+  </ol>
+</div>
+
+<h2>Labs so far</h2>
+
+<div class="week">
+  <div class="label">Week 6 · Fri 9 Oct</div>
+  <h3>Do smaller classes help kids learn?</h3>
+  <p>Tennessee's class-size lottery (Krueger 1999, <i>QJE</i>). A regression on a yes/no variable, and every number in the table: standard errors, t, p, confidence intervals, R², F-tests. Midterm review.</p>
+  <div class="links">
+    <a class="nb" href="notebooks/week-06/week06_star_notebook/">Notebook: CIs and p-values with real kids</a>
+    <a href="lectures/week-06/Week_06_STAR.pdf">Slides</a>
+    <a href="lectures/week-06/week06_star.do">Do-file</a>
+  </div>
+  <div class="note">The do-file downloads the STAR data from Harvard Dataverse (doi:10.7910/DVN/SIWH9F) the first time you run it.</div>
+</div>
+
+<div class="week">
+  <div class="label">Week 5</div>
+  <h3>Does school spending raise test scores?</h3>
+  <p>Papke (2005, <i>Journal of Public Economics</i>): Michigan's school-funding reform. Five regressions, from naive to Papke's model: controls, year dummies, school fixed effects.</p>
+  <div class="links">
+    <a class="nb" href="notebooks/week-05/week05_visuals/">Notebook: three pictures about standard errors</a>
+    <a href="lectures/week-05/Week_05_Papke.pdf">Slides</a>
+    <a href="lectures/week-05/week05_regression_ladder.do">Do-file: regression ladder</a>
+    <a href="lectures/week-05/week05_papke.do">Do-file: Papke</a>
+    <a href="lectures/week-05/week05_regression_specs.do">Do-file: specifications</a>
+    <a href="lectures/week-05/week05_papke_picture_optional.do">Optional picture</a>
+  </div>
+</div>
+
+<div class="week">
+  <div class="label">Week 4</div>
+  <h3>Compare a school with itself</h3>
+  <p>Pooled OLS versus fixed effects, and dummy variables as one intercept per school.</p>
+  <div class="links">
+    <a class="nb" href="notebooks/week-04/week04_pooled_vs_fe/">Notebook: pooled vs fixed effects</a>
+    <a href="lectures/week-04/Week_04_Pooled_vs_FE.pdf">Slides</a>
+    <a href="lectures/week-04/week04_pooled_vs_fe.do">Do-file: pooled vs FE</a>
+    <a href="lectures/week-04/week04_data_management_and_fe.do">Do-file: data management</a>
+  </div>
+</div>
+
+<div class="week">
+  <div class="label">Week 3</div>
+  <h3>Merging and reshaping data</h3>
+  <p>append, merge (1:1, 1:m, m:1), reshape wide ↔ long, first on small family files, then on Michigan schools.</p>
+  <div class="links">
+    <a href="lectures/week-03/Week_03_Merge_Reshape.pdf">Slides</a>
+    <a href="lectures/week-03/1_combining_data_ucla.do">1. Combining data</a>
+    <a href="lectures/week-03/2_reshaping_wide_to_long_ucla.do">2. Wide → long</a>
+    <a href="lectures/week-03/3_reshaping_long_to_wide_ucla.do">3. Long → wide</a>
+    <a href="lectures/week-03/school_merges_reshape_regression.do">Schools: merge, reshape, regress</a>
+    <a href="lectures/week-03/papke_stata_inspect.do">Inspect the Papke data</a>
+  </div>
+  <div class="note">Data: <a href="lectures/week-03/dads.dta">dads</a> · <a href="lectures/week-03/moms.dta">moms</a> · <a href="lectures/week-03/faminc.dta">faminc</a> · <a href="lectures/week-03/kids.dta">kids</a> · <a href="lectures/week-03/kids_wide.dta">kids_wide</a> · school files in <a href="https://github.com/iamsurajkumar/econ2228-bc-econometrics-stata-lab/tree/main/lectures/week-03/teaching-data-simple">teaching-data-simple/</a>. Family examples adapted from UCLA OARC Stata tutorials.</div>
+</div>
+
+<div class="week">
+  <div class="label">Week 2</div>
+  <h3>Do-files, descriptive statistics and joins</h3>
+  <p>Writing a do-file and a log, summary statistics, and a first merge in a mini research project on USDA crop reports (WASDE).</p>
+  <div class="links">
+    <a href="lectures/week-02/core/Week_02.pdf">Slides</a>
+    <a href="lectures/week-02/wasde-bbg/Week_02_WASDE_BBG.pdf">Slides: WASDE mini-project</a>
+    <a href="lectures/week-02/wasde-bbg/Week02_lab.do">Do-file: lab</a>
+    <a href="lectures/week-02/wasde-bbg/student/Week02_WASDE_BBG.do">Do-file: WASDE project</a>
+    <a href="lectures/week-02/wasde-bbg/student/wasde_revisions_week2.dta">WASDE data</a>
+  </div>
+  <div class="note">The futures-price file used in the WASDE project comes from licensed Bloomberg data, so it is not posted here. Ask your TA for it.</div>
+</div>
+
+<div class="week">
+  <div class="label">Week 1</div>
+  <h3>Introduction to Stata</h3>
+  <p>Getting Stata running, the interface, and first commands.</p>
+  <div class="links">
+    <a href="lectures/week-01/Week_01_Intro.pdf">Slides: introduction</a>
+    <a href="lectures/week-01/Week_01.pdf">Slides: Stata basics</a>
+  </div>
+</div>
+
+<h2>Coming up</h2>
+<div class="soon"><b>Fri 16 Oct · Do richer countries live longer?</b> <span>The Preston curve: fitted values, residuals, and why economists love logs.</span></div>
+<div class="soon"><b>Fri 23 Oct · Where in America can a poor kid get ahead?</b> <span>Chetty et al.'s mobility data: watch a coefficient flip sign when you add one variable.</span></div>
+<div class="soon"><b>Fri 30 Oct · Are Emily and Greg more employable than Lakisha and Jamal?</b> <span>The résumé experiment: dummies, interactions and the linear probability model.</span></div>
+<div class="soon"><b>Fri 6 Nov · Does inequality kill opportunity?</b> <span>The Great Gatsby curve: multicollinearity and heteroskedasticity.</span></div>
+<div class="soon"><b>Fri 13 Nov · Does a higher minimum wage kill jobs?</b> <span>Card and Krueger's New Jersey fast-food study: difference-in-differences.</span></div>
+
+<footer>
+  Materials by Suraj Kumar for the ECON2228 Stata lab, Boston College, with help from Claude (Anthropic).
+  Source: <a href="https://github.com/iamsurajkumar/econ2228-bc-econometrics-stata-lab">github.com/iamsurajkumar/econ2228-bc-econometrics-stata-lab</a>.
+</footer>
+</main>
+</body>
+</html>

@@ -1,0 +1,58 @@
+# Files copied from the Dropbox lectures/ folder into lectures/ by scripts/sync_from_dropbox.sh.
+# One path per line, relative to lectures/. Only student-facing material belongs here.
+# NOT published on purpose: copyrighted papers (Papke, Krueger PDFs), Bloomberg-derived
+# data (week-02 bbg_futures_week2.dta), instructor notes, LaTeX sources and build files.
+
+# Week 1: Intro to Stata
+week-01/Week_01_Intro.pdf
+week-01/Week_01.pdf
+
+# Week 2: do-files, logs, descriptive statistics; WASDE merge mini-project
+week-02/core/Week_02.pdf
+week-02/wasde-bbg/Week_02_WASDE_BBG.pdf
+week-02/wasde-bbg/Week02_lab.do
+week-02/wasde-bbg/student/Week02_WASDE_BBG.do
+week-02/wasde-bbg/student/Week02_simple.do
+week-02/wasde-bbg/student/wasde_revisions_week2.dta
+
+# Week 3: append, merge, reshape
+week-03/Week_03_Merge_Reshape.pdf
+week-03/1_combining_data_ucla.do
+week-03/2_reshaping_wide_to_long_ucla.do
+week-03/3_reshaping_long_to_wide_ucla.do
+week-03/dads.dta
+week-03/moms.dta
+week-03/faminc.dta
+week-03/kids.dta
+week-03/kids_wide.dta
+week-03/papke_stata_inspect.do
+week-03/school_merges_reshape_regression.do
+week-03/teaching-data-simple/school_1993_1995.dta
+week-03/teaching-data-simple/school_1996_1998.dta
+week-03/teaching-data-simple/school_profile.dta
+week-03/teaching-data-simple/school_year.dta
+week-03/teaching-data-simple/school_year_main.dta
+week-03/teaching-data-simple/school_year_merged.dta
+week-03/teaching-data-simple/school_year_wide.dta
+
+# Week 4: pooled OLS vs fixed effects, dummy variables
+week-04/Week_04_Pooled_vs_FE.pdf
+week-04/week04_data_management_and_fe.do
+week-04/week04_pooled_vs_fe.do
+week-04/week04_pooled_vs_fe.py
+week-04/toy_panel.csv
+week-04/papke_twins.csv
+
+# Week 5: Papke (2005), does school spending raise test scores?
+week-05/Week_05_Papke.pdf
+week-05/week05_papke.do
+week-05/week05_regression_ladder.do
+week-05/week05_regression_specs.do
+week-05/week05_papke_picture_optional.do
+week-05/week05_visuals.py
+
+# Week 6: Tennessee STAR, do smaller classes help kids learn?
+week-06/Week_06_STAR.pdf
+week-06/week06_star.do
+week-06/week06_star_notebook.py
+week-06/public/star_k.csv
