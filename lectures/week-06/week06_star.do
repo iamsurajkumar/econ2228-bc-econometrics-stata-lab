@@ -353,6 +353,94 @@ display "one-sided critical values: 10% = " invttail(83, 0.10) ///
 * wrote the statistic with the letter t, and the name "Student's t"
 * stuck. (The notebook draws the t curve for any degrees of freedom.)
 
+* PICTURE 1: THE t CURVE FOR DIFFERENT DEGREES OF FREEDOM.
+* twoway function draws a formula as a curve. tden(df, x) = height of the
+* t curve; normalden(x) = height of the bell curve (normal distribution).
+twoway (function y = normalden(x), range(-5 5) lcolor(black) lpattern(dash)) ///
+       (function y = tden(1, x),   range(-5 5) lcolor(red))                    ///
+       (function y = tden(5, x),   range(-5 5) lcolor(orange))                 ///
+       (function y = tden(30, x),  range(-5 5) lcolor(blue)),                  ///
+    legend(order(1 "bell curve" 2 "t, df = 1" 3 "t, df = 5" 4 "t, df = 30") ///
+           rows(1) position(6))                                              ///
+    xtitle("t-statistic") ytitle("Height of the curve")                      ///
+    title("Fewer degrees of freedom = fatter tails")                         ///
+    name(tcurves, replace)
+
+* WHAT TO SEE: with df = 1 the curve is low in the middle and high in the
+* tails: big t's happen often by luck. By df = 30 the t curve and the bell
+* curve almost lie on top of each other.
+
+* PICTURE 2: THE p-VALUE IS AN AREA. YOUR TURN TO PLAY.
+* Pick a number of degrees of freedom and a t-statistic. We start with the
+* bedrooms example from lecture (t = 1.53, df = 83). Then CHANGE the two
+* numbers below and run the lines from here down to "graph combine" again.
+*   Try: df = 3, df = 10, df = 1000 with the same t. Then t = 2.5 or -2.
+scalar play_df = 83
+scalar play_t  = 1.53
+
+* How wide to draw the picture: at least -5 to 5, wider if t is bigger.
+scalar play_x = max(5, abs(play_t) + 1)
+
+* The numbers that go in the titles (= the display commands above).
+display "two-sided p      = " 2*ttail(play_df, abs(play_t))
+display "one-sided p      = " ttail(play_df, play_t)
+display "5% two-sided cut = " invttail(play_df, 0.025)
+display "5% one-sided cut = " invttail(play_df, 0.05)
+
+* Two-sided: both tails beyond -|t| and +|t| count.
+* recast(area) fills the space under the curve; we fill only the tails.
+* `=...' puts the value of a formula straight into the command.
+* Dashed black = the bell curve, for comparison.
+twoway (function y = tden(play_df, x), range(-`=play_x' -`=abs(play_t)')        ///
+            recast(area) color(red%50))                                         ///
+       (function y = tden(play_df, x), range(`=abs(play_t)' `=play_x')          ///
+            recast(area) color(red%50))                                         ///
+       (function y = normalden(x), range(-`=play_x' `=play_x')                  ///
+            lcolor(black) lpattern(dash))                                       ///
+       (function y = tden(play_df, x), range(-`=play_x' `=play_x')              ///
+            lcolor(navy) lwidth(medthick)),                                     ///
+    xline(-`=invttail(play_df, 0.025)' `=invttail(play_df, 0.025)',             ///
+          lpattern(dash) lcolor(gs8)) legend(off)                               ///
+    xtitle("t-statistic") ytitle("")                                            ///
+    title("Two-sided: p = 2*ttail(`=play_df', |`=play_t'|) = `=string(2*ttail(play_df, abs(play_t)), "%5.3f")'") ///
+    note("Red = p-value. Grey dashed = 5% critical values. Black dashed = bell curve.") ///
+    name(two_sided, replace)
+
+* One-sided (H1: b > 0): only the right tail, to the right of t, counts.
+twoway (function y = tden(play_df, x), range(`=play_t' `=play_x')               ///
+            recast(area) color(red%50))                                         ///
+       (function y = normalden(x), range(-`=play_x' `=play_x')                  ///
+            lcolor(black) lpattern(dash))                                       ///
+       (function y = tden(play_df, x), range(-`=play_x' `=play_x')              ///
+            lcolor(navy) lwidth(medthick)),                                     ///
+    xline(`=invttail(play_df, 0.05)', lpattern(dash) lcolor(gs8)) legend(off)   ///
+    xtitle("t-statistic") ytitle("")                                            ///
+    title("One-sided: p = ttail(`=play_df', `=play_t') = `=string(ttail(play_df, play_t), "%5.3f")'") ///
+    note("Red = p-value. Grey dashed = 5% critical value.")                     ///
+    name(one_sided, replace)
+
+* Put the two pictures one above the other.
+graph combine two_sided one_sided, cols(1) name(tails, replace)
+
+* WHAT TO SEE (t = 1.53, df = 83): two-sided, the red area is 13%;
+* one-sided, it is half of that, 6.5%. Neither passes the 5% line.
+* Now keep t = 1.53 and set df = 3: the tails get fatter, so the red area
+* grows. The same t is LESS convincing with fewer observations.
+
+* PICTURE 3: OUR STAR t. Where does t = 5.68 sit on the curve?
+* `=t_small' puts the value of the scalar into the command.
+twoway (function y = tden(df_small, x), range(-7 7) lcolor(navy) lwidth(medthick)), ///
+    xline(`=t_small', lcolor(red) lwidth(thick) lpattern(solid))              ///
+    xscale(range(-7 7)) xlabel(-6(2)6)                                        ///
+    xline(-1.96 1.96, lpattern(dash) lcolor(gs8))                             ///
+    xtitle("t-statistic") ytitle("Height of the curve")                       ///
+    title("Our t = 5.68 is far out in the tail")                              ///
+    note("Dashed = 5% critical values. The area beyond the red line is 0.000000007.") ///
+    name(our_t, replace)
+
+* WHAT TO SEE: the curve is flat at zero long before 5.68. If small
+* classes did nothing, a t this big would almost never happen by luck.
+
 * (e) A t-TEST GIVES THE SAME t
 * ttest compares the two group averages directly. (It subtracts in the
 * other order, regular - small, so its difference and t have a minus.)
