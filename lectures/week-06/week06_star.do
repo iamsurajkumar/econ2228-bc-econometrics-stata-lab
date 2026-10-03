@@ -253,8 +253,15 @@ display "SE by hand = " sqrt(V[1,1])
 
 * (b) THE t-STATISTIC = 5.68
 * How many SEs is our gap away from zero?  t = b1 / SE = 13.9 / 2.45.
-local t = _b[small] / _se[small]
-display "t = " `t'
+* We save it as a SCALAR (a named number). Unlike a local, a scalar stays
+* in Stata's memory after the selected lines finish, so you can run the
+* rest of this file in pieces and t_small is still there.
+scalar t_small = _b[small] / _se[small]
+display "t = " t_small
+
+* We also save the degrees of freedom: e(df_r) changes as soon as we run
+* another regression, but this scalar does not.
+scalar df_small = e(df_r)
 
 * (c) THE 95% CONFIDENCE INTERVAL = [9.1, 18.7]
 * gap +/- (about 2) x SE. The exact "about 2" comes from the t
@@ -280,7 +287,8 @@ display "95% CI: [" _b[small] - invt(e(df_r), 0.975)*_se[small] ", " ///
 *                                         |#####| = ttail(df, t)
 *
 * df = degrees of freedom = how many children we have, minus the number of
-* coefficients we estimated. Here: 3,743 - 2 = 3,741 (stored in e(df_r)).
+* coefficients we estimated. Here: 3,743 - 2 = 3,741 (stored in e(df_r),
+* and saved above as the scalar df_small).
 *
 * Try ttail at 1.96 with LOTS of degrees of freedom: 2.5% is in the tail.
 display "ttail(3741, 1.96) = " ttail(3741, 1.96)
@@ -300,7 +308,7 @@ display "ttail(5, 1.96)    = " ttail(5, 1.96)
 *           -+-----------------+-----------------+->
 *           -t                 0                 t
 *
-display "two-sided p = " 2*ttail(e(df_r), abs(`t'))
+display "two-sided p = " 2*ttail(df_small, abs(t_small))
 
 * WHAT TO SEE: about 0.00000001. Luck almost never does this.
 * Stata rounds it to 0.000 in the table (the column P>|t|).
@@ -309,20 +317,20 @@ display "two-sided p = " 2*ttail(e(df_r), abs(`t'))
 * one direction:  H0: b1 <= 0  (they do not help)
 *                 H1: b1 > 0   (they help)
 * Only the upper (right) tail counts, so the p-value is half as big.
-display "one-sided p (H1: b1 > 0) = " ttail(e(df_r), `t')
+display "one-sided p (H1: b1 > 0) = " ttail(df_small, t_small)
 
 * The OTHER direction, H1: b1 < 0 ("small classes HURT"), uses the LEFT
 * tail: the chance of a t SMALLER than ours = 1 - ttail(df, t).
-display "one-sided p (H1: b1 < 0) = " 1 - ttail(e(df_r), `t')
+display "one-sided p (H1: b1 < 0) = " 1 - ttail(df_small, t_small)
 
 * WHAT TO SEE: almost 1. Our t is far to the right, so it gives no
 * evidence at all that small classes hurt.
 
 * CRITICAL VALUES go the other way round: invttail(df, area) gives the t
 * that leaves that much area in the right tail.
-display "5% two-sided: reject if |t| > " invttail(e(df_r), 0.025)
-display "5% one-sided: reject if  t  > " invttail(e(df_r), 0.05)
-display "1% two-sided: reject if |t| > " invttail(e(df_r), 0.005)
+display "5% two-sided: reject if |t| > " invttail(df_small, 0.025)
+display "5% one-sided: reject if  t  > " invttail(df_small, 0.05)
+display "1% two-sided: reject if |t| > " invttail(df_small, 0.005)
 
 * WHAT TO SEE: 1.96, 1.65, 2.58: the numbers from the t table (table G.2
 * in Wooldridge) for "infinite" degrees of freedom.
