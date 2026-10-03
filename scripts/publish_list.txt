@@ -3,17 +3,7 @@
 # NOT published on purpose: copyrighted papers (Papke, Krueger PDFs), Bloomberg-derived
 # data (week-02 bbg_futures_week2.dta), instructor notes, LaTeX sources and build files.
 
-# Week 1: Intro to Stata
-week-01/Week_01_Intro.pdf
-week-01/Week_01.pdf
-
-# Week 2: do-files, logs, descriptive statistics; WASDE merge mini-project
-week-02/core/Week_02.pdf
-week-02/wasde-bbg/Week_02_WASDE_BBG.pdf
-week-02/wasde-bbg/Week02_lab.do
-week-02/wasde-bbg/student/Week02_WASDE_BBG.do
-week-02/wasde-bbg/student/Week02_simple.do
-week-02/wasde-bbg/student/wasde_revisions_week2.dta
+# Weeks 1 and 2 are not published (instructor's choice, Oct 2026).
 
 # Week 3: append, merge, reshape
 week-03/Week_03_Merge_Reshape.pdf
