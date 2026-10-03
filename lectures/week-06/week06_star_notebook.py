@@ -58,8 +58,15 @@ def _(mo):
 
 @app.cell
 def _(mo, pd):
-    # Load the real data. notebook_location() works on your laptop AND in the browser.
-    star = pd.read_csv(str(mo.notebook_location() / "public" / "star_k.csv"))
+    # Load the real data. On your laptop and in the browser version the file sits
+    # next to the notebook. On molab only the notebook is copied, so we read the
+    # same file from the course's GitHub repository instead.
+    GITHUB_CSV = ("https://raw.githubusercontent.com/iamsurajkumar/"
+                  "econ2228-bc-econometrics-stata-lab/main/lectures/week-06/public/star_k.csv")
+    try:
+        star = pd.read_csv(str(mo.notebook_location() / "public" / "star_k.csv"))
+    except OSError:  # file not found next to the notebook (e.g. on molab)
+        star = pd.read_csv(GITHUB_CSV)
     # Keep small (1) and regular (0) classes only, as in the Stata file.
     kids = star.dropna(subset=["small"]).reset_index(drop=True)
     kids["small"] = kids["small"].astype(int)

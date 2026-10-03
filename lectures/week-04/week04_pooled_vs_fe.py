@@ -19,10 +19,17 @@ def _():
     import numpy as np
     import pandas as pd
 
-    # notebook_location() works on your laptop AND in the browser version.
+    # On your laptop and in the browser version the data sit next to the notebook.
+    # On molab only the notebook is copied, so we read the files from GitHub instead.
     folder = mo.notebook_location()
-    toy = pd.read_csv(str(folder / "toy_panel.csv"))
-    real = pd.read_csv(str(folder / "papke_twins.csv"))
+    github = ("https://raw.githubusercontent.com/iamsurajkumar/"
+              "econ2228-bc-econometrics-stata-lab/main/lectures/week-04/")
+    try:
+        toy = pd.read_csv(str(folder / "toy_panel.csv"))
+        real = pd.read_csv(str(folder / "papke_twins.csv"))
+    except OSError:  # files not found next to the notebook (e.g. on molab)
+        toy = pd.read_csv(github + "toy_panel.csv")
+        real = pd.read_csv(github + "papke_twins.csv")
 
     def slope(x, y):
         """OLS slope with an intercept, for displaying the classroom examples."""
