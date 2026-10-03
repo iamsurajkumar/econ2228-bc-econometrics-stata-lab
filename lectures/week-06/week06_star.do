@@ -267,17 +267,83 @@ display "95% CI: [" _b[small] - invt(e(df_r), 0.975)*_se[small] ", " ///
 * (d) THE p-VALUE = 0.000
 * Suppose small classes truly did NOTHING (b1 = 0). How often would luck
 * alone give a t this far from zero, in either direction?
-* ttail(df, t) = chance of a t bigger than ours; x2 for both directions.
+*
+* ttail(df, t) = the chance that a t-distributed number is BIGGER than t.
+* It is the area of the RIGHT tail only:
+*
+*                        _.-'''-._
+*                     .-'    |    '-.
+*                   .'       |       '.
+*            _ _ .-'         |         '-.|#####_ _ _
+*           -----------------+------------+--------->
+*                            0            t
+*                                         |#####| = ttail(df, t)
+*
+* df = degrees of freedom = how many children we have, minus the number of
+* coefficients we estimated. Here: 3,743 - 2 = 3,741 (stored in e(df_r)).
+*
+* Try ttail at 1.96 with LOTS of degrees of freedom: 2.5% is in the tail.
+display "ttail(3741, 1.96) = " ttail(3741, 1.96)
+
+* Now with only 5 degrees of freedom (7 children): the tail is FATTER.
+* With few children, the SE itself is a noisy guess, so big t's happen
+* by luck more often than the bell curve says.
+display "ttail(5, 1.96)    = " ttail(5, 1.96)
+
+* WHAT TO SEE: 0.025 versus 0.054. With few children, "1.96" is not
+* far enough to call something unusual.
+
+* TWO-SIDED p: luck could push the gap up OR down, so we count BOTH tails.
+* abs() = absolute value, so it works for a negative t too.
+*
+*            |#####_ _ _ .-'''''''''''-. _ _ _#####|
+*           -+-----------------+-----------------+->
+*           -t                 0                 t
+*
 display "two-sided p = " 2*ttail(e(df_r), abs(`t'))
 
 * WHAT TO SEE: about 0.00000001. Luck almost never does this.
-* Stata rounds it to 0.000 in the table.
+* Stata rounds it to 0.000 in the table (the column P>|t|).
 
 * ONE-SIDED TEST. The question "do small classes HELP?" only cares about
 * one direction:  H0: b1 <= 0  (they do not help)
 *                 H1: b1 > 0   (they help)
-* Only the upper tail counts, so the p-value is half as big.
-display "one-sided p = " ttail(e(df_r), `t')
+* Only the upper (right) tail counts, so the p-value is half as big.
+display "one-sided p (H1: b1 > 0) = " ttail(e(df_r), `t')
+
+* The OTHER direction, H1: b1 < 0 ("small classes HURT"), uses the LEFT
+* tail: the chance of a t SMALLER than ours = 1 - ttail(df, t).
+display "one-sided p (H1: b1 < 0) = " 1 - ttail(e(df_r), `t')
+
+* WHAT TO SEE: almost 1. Our t is far to the right, so it gives no
+* evidence at all that small classes hurt.
+
+* CRITICAL VALUES go the other way round: invttail(df, area) gives the t
+* that leaves that much area in the right tail.
+display "5% two-sided: reject if |t| > " invttail(e(df_r), 0.025)
+display "5% one-sided: reject if  t  > " invttail(e(df_r), 0.05)
+display "1% two-sided: reject if |t| > " invttail(e(df_r), 0.005)
+
+* WHAT TO SEE: 1.96, 1.65, 2.58: the numbers from the t table (table G.2
+* in Wooldridge) for "infinite" degrees of freedom.
+
+* AN EXAMPLE FROM THE LECTURE (house prices, Wooldridge's HPRICE1 data):
+* a bedrooms coefficient with t = 1.53 and 88 - 5 = 83 degrees of freedom.
+display "two-sided p = " 2*ttail(83, 1.53)
+display "one-sided p = " ttail(83, 1.53)
+display "one-sided critical values: 10% = " invttail(83, 0.10) ///
+        "   5% = " invttail(83, 0.05)
+
+* WHAT TO SEE: two-sided p = 0.13, one-sided p = 0.065. Against H1: b > 0
+* we reject H0 at the 10% level (1.53 > 1.29) but not at 5% (1.53 < 1.66).
+* SAME t, DIFFERENT ANSWER: decide one- or two-sided BEFORE you look.
+*
+* WHY "t"? The distribution was found in 1908 by William Gosset, a
+* chemist at the Guinness brewery in Dublin who tested barley and beer
+* with very small samples. Guinness did not let staff publish under
+* their own names, so he signed his paper "Student". Ronald Fisher later
+* wrote the statistic with the letter t, and the name "Student's t"
+* stuck. (The notebook draws the t curve for any degrees of freedom.)
 
 * (e) A t-TEST GIVES THE SAME t
 * ttest compares the two group averages directly. (It subtracts in the

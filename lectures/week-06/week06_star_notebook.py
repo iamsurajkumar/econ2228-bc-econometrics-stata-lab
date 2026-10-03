@@ -30,9 +30,9 @@ def _():
     import numpy as np
     import pandas as pd
     import altair as alt
-    from math import erfc, sqrt
+    from math import erfc, lgamma, sqrt
 
-    return alt, erfc, mo, np, pd, sqrt
+    return alt, erfc, lgamma, mo, np, pd, sqrt
 
 
 @app.cell
@@ -103,7 +103,7 @@ def _(kids, np):
         idx = rng.integers(0, N_ALL, size=(reps, n))
         return score_all[idx], small_all[idx]
 
-    return GAP_ALL, draw_samples, gap_and_se
+    return GAP_ALL, draw_samples, gap_and_se, score_all, small_all
 
 
 @app.cell
@@ -493,7 +493,271 @@ def _(mo):
     **Try:** with n = 50, many samples give p > 0.05 even though small
     classes really help: the sample is too small to tell. With all
     3,743 kids, Stata's p is about 0.00000001, and no shuffle ever comes close.
+    """)
+    return
 
+
+@app.cell
+def _(mo):
+    mo.md(r"""
+    ---
+    ## 5. The t distribution: the curve behind every p-value
+
+    Stata does not shuffle 2,000 times. It compares our t with a curve, the
+    **t distribution**: how t-statistics are spread out *when the true effect is zero*.
+    `ttail(df, t)` in Stata is the area under this curve to the **right** of t.
+
+    **Why "t"?** In 1908 William Gosset, a chemist at the **Guinness brewery**
+    in Dublin, had to judge barley and beer from tiny samples (sometimes 4 or 5
+    batches). He noticed that "estimate ÷ estimated SE" has **fatter tails** than
+    the bell curve when the sample is small, and worked out the right curve.
+    Guinness did not let staff publish under their own names, so he signed the
+    paper **"Student"**. Gosset called his statistic *z*; Ronald Fisher rewrote it
+    in 1925 with the letter **t**, and "Student's t" stuck.
+
+    **Degrees of freedom (df)** = number of observations − number of coefficients
+    estimated. In our Stata regression: 3,743 − 2 = 3,741. Few df = fat tails;
+    from about 120 df on, the t curve and the bell curve are nearly the same.
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.accordion({"📐 The math: why fatter tails when the sample is small?": mo.md(r"""
+    If we knew the true noise $\sigma$, the standardized gap would follow the
+    **bell curve** (standard normal):
+
+    $$z = \frac{\hat\beta_1 - \beta_1}{\text{sd}(\hat\beta_1)} \sim N(0, 1).$$
+
+    But we never know $\sigma$. We plug in its estimate $\hat\sigma$ from the
+    residuals, and get the SE that Stata prints:
+
+    $$t = \frac{\hat\beta_1 - \beta_1}{\text{se}(\hat\beta_1)} \sim t_{n-k-1}.$$
+
+    With few observations, $\hat\sigma$ is itself a noisy guess. Sometimes it
+    comes out **too small** by luck, and then t comes out too big. That extra
+    chance of a big t is exactly the fatter tail.
+
+    With $\nu$ degrees of freedom the curve is
+
+    $$f(t) = \frac{\Gamma\!\left(\frac{\nu+1}{2}\right)}{\sqrt{\nu\pi}\;\Gamma\!\left(\frac{\nu}{2}\right)}
+    \left(1 + \frac{t^2}{\nu}\right)^{-\frac{\nu+1}{2}}.$$
+
+    As $\nu \to \infty$, $\left(1 + t^2/\nu\right)^{-\nu/2} \to e^{-t^2/2}$: the bell curve.
+
+    | df | 5% two-sided critical value | 5% one-sided critical value |
+    |---|---|---|
+    | 1 | 12.71 | 6.31 |
+    | 5 | 2.57 | 2.02 |
+    | 30 | 2.04 | 1.70 |
+    | 120 | 1.98 | 1.66 |
+    | ∞ (bell curve) | 1.96 | 1.645 |
+
+    **Two-sided or one-sided?** Two-sided (H1: β ≠ 0) counts both tails:
+    p = `2*ttail(df, abs(t))`. One-sided (H1: β > 0) counts only the right tail:
+    p = `ttail(df, t)`, half as big. Decide which one **before** you look at the
+    data: picking the side after seeing the sign is cheating.
+    """)})
+    return
+
+
+@app.cell
+def _(lgamma, np, sqrt):
+    def t_pdf(x, df):
+        # Height of the t curve with df degrees of freedom (formula in the box above).
+        const = np.exp(lgamma((df + 1) / 2) - lgamma(df / 2)) / sqrt(df * np.pi)
+        return const * (1 + np.asarray(x) ** 2 / df) ** (-(df + 1) / 2)
+
+
+    def t_tail(t, df):
+        # Area to the RIGHT of t: Stata's ttail(df, t). The curve is symmetric,
+        # so add up the area between 0 and |t| (Simpson's rule) and take it from 0.5.
+        grid = np.linspace(0, abs(t), 2001)
+        f = t_pdf(grid, df)
+        middle = (grid[1] - grid[0]) / 3 * (f[0] + 4 * f[1:-1:2].sum() + 2 * f[2:-1:2].sum() + f[-1])
+        return 0.5 - middle if t >= 0 else 0.5 + middle
+
+
+    def t_crit(area, df):
+        # The t that leaves `area` in the right tail: Stata's invttail(df, area).
+        lo, hi = 0.0, 100.0
+        for _ in range(60):
+            mid_t = (lo + hi) / 2
+            lo, hi = (mid_t, hi) if t_tail(mid_t, df) > area else (lo, mid_t)
+        return (lo + hi) / 2
+
+    return t_crit, t_pdf, t_tail
+
+
+@app.cell
+def _(mo):
+    df_t = mo.ui.slider(steps=[1, 2, 3, 4, 5, 7, 10, 15, 20, 30, 50, 83, 120, 1000, 3741],
+                        value=5, label="Degrees of freedom (df)")
+    t_value = mo.ui.slider(-6, 6, value=2.0, step=0.01, label="Our t-statistic")
+    sides = mo.ui.radio(["two-sided (H1: β ≠ 0)", "one-sided, right (H1: β > 0)",
+                         "one-sided, left (H1: β < 0)"],
+                        value="two-sided (H1: β ≠ 0)", label="Alternative")
+    mo.vstack([mo.hstack([df_t, t_value], justify="start", gap=2), sides])
+    return df_t, sides, t_value
+
+
+@app.cell
+def _(
+    alt,
+    df_t,
+    erfc,
+    mo,
+    np,
+    pd,
+    sides,
+    sqrt,
+    t_crit,
+    t_pdf,
+    t_tail,
+    t_value,
+):
+    xs = np.linspace(-6, 6, 601)
+    curves = pd.DataFrame({"t": xs, "t curve": t_pdf(xs, df_t.value),
+                           "bell curve": np.exp(-xs ** 2 / 2) / sqrt(2 * np.pi)})
+
+    # Which part of the curve counts as "at least as extreme as ours"?
+    tv = t_value.value
+    if sides.value.startswith("two"):
+        shaded = np.abs(xs) >= abs(tv)
+        p_t, p_bell = 2 * t_tail(abs(tv), df_t.value), erfc(abs(tv) / sqrt(2))
+        crit, crit_txt = t_crit(0.025, df_t.value), "reject if |t| >"
+        stata_cmd = f"display 2*ttail({df_t.value}, abs({tv:.2f}))"
+    elif "right" in sides.value:
+        shaded = xs >= tv
+        p_t, p_bell = t_tail(tv, df_t.value), erfc(tv / sqrt(2)) / 2
+        crit, crit_txt = t_crit(0.05, df_t.value), "reject if t >"
+        stata_cmd = f"display ttail({df_t.value}, {tv:.2f})"
+    else:
+        shaded = xs <= tv
+        p_t, p_bell = 1 - t_tail(tv, df_t.value), 1 - erfc(tv / sqrt(2)) / 2
+        crit, crit_txt = -t_crit(0.05, df_t.value), "reject if t <"
+        stata_cmd = f"display 1 - ttail({df_t.value}, {tv:.2f})"
+
+    tail_df = curves.assign(tail=np.where(shaded, curves["t curve"], np.nan))
+    xscale5 = alt.Scale(domain=[-6, 6])
+    yscale5 = alt.Scale(domain=[0, 0.42])
+    area5 = alt.Chart(tail_df).mark_area(color="#d62728", opacity=0.55).encode(
+        x=alt.X("t:Q", scale=xscale5, title="t-statistic"),
+        y=alt.Y("tail:Q", scale=yscale5, title="Height of the curve"))
+    t_line = alt.Chart(curves).mark_line(color="#2a78d6", strokeWidth=2.5).encode(
+        x=alt.X("t:Q", scale=xscale5), y=alt.Y("t curve:Q", scale=yscale5))
+    bell_line = alt.Chart(curves).mark_line(color="black", strokeDash=[5, 4], strokeWidth=1.5).encode(
+        x=alt.X("t:Q", scale=xscale5), y=alt.Y("bell curve:Q", scale=yscale5))
+    our_t = alt.Chart(pd.DataFrame({"t": [tv]})).mark_rule(color="black", strokeWidth=2).encode(x="t:Q")
+
+    stats5 = mo.hstack([
+        mo.stat(f"{p_t:.4f}", label=f"p from the t curve (df = {df_t.value})",
+                caption="red area"),
+        mo.stat(f"{p_bell:.4f}", label="p from the bell curve",
+                caption="what you'd get with huge samples"),
+        mo.stat(f"{abs(crit):.2f}", label="5% critical value",
+                caption=f"{crit_txt} {crit:.2f}"),
+    ], justify="start", gap=2)
+
+    mo.vstack([
+        (bell_line + area5 + t_line + our_t).properties(width=640, height=300),
+        stats5,
+        mo.md(f"Blue = t curve with {df_t.value} df; dashed black = bell curve. "
+              f"Same in Stata: `{stata_cmd}`"),
+    ])
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""
+    **Try:**
+
+    - Set t = 1.96, two-sided, and slide df from 1 up to 3,741. The p-value falls
+      from 0.30 to 0.05: the same t means **less** with few observations.
+    - Set df = 83 and t = 1.53 (the bedrooms coefficient in the house-price
+      example from lecture). Two-sided p = 0.13, one-sided p = 0.065: significant
+      at 10% one-sided, not at 5%.
+    - Set df = 3,741 and t = 5.68 (our STAR gap). The red area is too thin to see.
+
+    ### Are the fat tails real? Rerun Tennessee with only a few kids
+
+    Draw **m** kids from small classes and **m** from regular classes, and compute
+    t = (our gap − 13.9) / SE. The gap is centered on the truth, so these t's
+    should follow the t curve with 2m − 2 df.
+    """)
+    return
+
+
+@app.cell
+def _(mo):
+    m_kids = mo.ui.slider(steps=[2, 3, 4, 5, 8, 10, 15, 25, 50, 100], value=3,
+                          label="Kids per group (m)")
+    redraw6 = mo.ui.button(value=0, on_click=lambda v: v + 1, label="Draw again")
+    mo.hstack([m_kids, redraw6], justify="start", gap=2)
+    return m_kids, redraw6
+
+
+@app.cell
+def _(
+    GAP_ALL,
+    alt,
+    gap_and_se,
+    m_kids,
+    mo,
+    np,
+    pd,
+    redraw6,
+    score_all,
+    small_all,
+    sqrt,
+    t_pdf,
+    t_tail,
+):
+    rng6 = np.random.default_rng(600 + redraw6.value)
+    small_scores = score_all[small_all == 1]
+    regular_scores = score_all[small_all == 0]
+    ys6 = np.hstack([rng6.choice(small_scores, (5000, m_kids.value)),
+                     rng6.choice(regular_scores, (5000, m_kids.value))])
+    ds6 = np.hstack([np.ones((5000, m_kids.value), int), np.zeros((5000, m_kids.value), int)])
+    gaps6, ses6 = gap_and_se(ys6, ds6)
+    t6 = (gaps6 - GAP_ALL) / ses6
+    df6 = 2 * m_kids.value - 2
+
+    counts6, edges6 = np.histogram(t6, bins=np.linspace(-6, 6, 61))  # |t| > 6 left off the picture
+    bins6 = pd.DataFrame({"lo": edges6[:-1], "hi": edges6[1:],
+                          "density": counts6 / (len(t6) * (edges6[1] - edges6[0]))})
+    grid6 = np.linspace(-6, 6, 601)
+    lines6 = pd.DataFrame({"t": grid6, "t curve": t_pdf(grid6, df6),
+                           "bell curve": np.exp(-grid6 ** 2 / 2) / sqrt(2 * np.pi)})
+    hist6 = alt.Chart(bins6).mark_rect(color="#bbbbbb", stroke="white", strokeWidth=1).encode(
+        x=alt.X("lo:Q", scale=alt.Scale(domain=[-6, 6]), title="t from one rerun"),
+        x2="hi:Q", y=alt.Y("density:Q", title="Share of reruns (density)"), y2=alt.datum(0))
+    tfit6 = alt.Chart(lines6).mark_line(color="#2a78d6", strokeWidth=2.5).encode(x="t:Q", y="t curve:Q")
+    bell6 = alt.Chart(lines6).mark_line(color="black", strokeDash=[5, 4]).encode(x="t:Q", y="bell curve:Q")
+
+    stats6 = mo.hstack([
+        mo.stat(f"{(np.abs(t6) > 1.96).mean():.1%}", label="Reruns with |t| > 1.96",
+                caption="real kids, 5,000 reruns"),
+        mo.stat(f"{2 * t_tail(1.96, df6):.1%}", label=f"t curve says (df = {df6})",
+                caption="2*ttail(df, 1.96)"),
+        mo.stat("5.0%", label="Bell curve says", caption="always, whatever the sample"),
+    ], justify="start", gap=2)
+
+    mo.vstack([
+        (hist6 + bell6 + tfit6).properties(width=640, height=300),
+        stats6,
+        mo.md("With 2 or 3 kids per group, |t| > 1.96 happens far more often than 5%: "
+              "the bell curve would fool you, the t curve does not. With 50+ kids per "
+              "group all three numbers agree."),
+    ])
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""
     ---
     ## Back to Stata
 
@@ -503,6 +767,7 @@ def _(mo):
     | Std. err. | how much the gap moves if we rerun the study | Section 2 |
     | 95% conf. interval | a range built by a method that catches the truth 95% of the time | Section 3 |
     | P>\|t\| | how often luck alone gives a gap this big | Section 4 |
+    | `ttail(df, t)`, `invttail(df, p)` | right-tail area of the t curve; the t that leaves area p | Section 5 |
     | R-squared | how much of the differences between kids we explain (tiny here) | Section 1 |
     """)
     return
