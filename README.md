@@ -12,7 +12,7 @@ marimo notebook that runs in the browser.
 | 3 | Merging and reshaping data | |
 | 4 | Compare a school with itself (pooled OLS vs fixed effects) [![Open in molab](https://marimo.io/molab-shield.svg)](https://molab.marimo.io/github/iamsurajkumar/econ2228-bc-econometrics-stata-lab/blob/main/lectures/week-04/week04_pooled_vs_fe.py) | Papke (2005) |
 | 5 | Does school spending raise test scores? [![Open in molab](https://marimo.io/molab-shield.svg)](https://molab.marimo.io/github/iamsurajkumar/econ2228-bc-econometrics-stata-lab/blob/main/lectures/week-05/week05_visuals.py) | Papke (2005), *J. Public Econ.* |
-| 6 | Do smaller classes help kids learn? [![Open in molab](https://marimo.io/molab-shield.svg)](https://molab.marimo.io/github/iamsurajkumar/econ2228-bc-econometrics-stata-lab/blob/main/lectures/week-06/week06_star_notebook.py) | Krueger (1999), *QJE* |
+| 6 | Is another year of school worth it? Every number in `regress wage educ` [![Open in molab](https://marimo.io/molab-shield.svg)](https://molab.marimo.io/github/iamsurajkumar/econ2228-bc-econometrics-stata-lab/blob/main/lectures/week-06/week06_hood_notebook.py) | Wooldridge WAGE1 (1976 CPS) |
 
 ## Layout
 
@@ -45,7 +45,7 @@ Never publish copyrighted papers, licensed data (e.g. Bloomberg), solutions, or 
 
 ## Data sources
 
-- Project STAR: Achilles et al. (2008), Harvard Dataverse, doi:10.7910/DVN/SIWH9F.
+- Wages and schooling (Week 6): Wooldridge `wage1`, via `bcuse`.
 - Michigan schools (Papke 2005): Wooldridge `school93_98`, via `bcuse`.
 - Week 3 family examples: adapted from UCLA OARC Stata modules.
 - WASDE revisions: USDA World Agricultural Supply and Demand Estimates.

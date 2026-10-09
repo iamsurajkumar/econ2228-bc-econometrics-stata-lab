@@ -46,8 +46,7 @@ week-05/week05_regression_specs.do
 week-05/week05_papke_picture_optional.do
 week-05/week05_visuals.py
 
-# Week 6: Tennessee STAR, do smaller classes help kids learn?
-week-06/Week_06_STAR.pdf
-week-06/week06_star.do
-week-06/week06_star_notebook.py
-week-06/public/star_k.csv
+# Week 6: looking under the hood of `regress wage educ` (Wooldridge WAGE1)
+week-06/week06_hood_notebook.py
+week-06/public/wage1.csv
+week-06/week06-Looking-under-the-Hood-Stata.do

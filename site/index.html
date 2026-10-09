@@ -65,15 +65,14 @@
 
 <div class="week">
   <div class="label">Week 6 · Fri 9 Oct</div>
-  <h3>Do smaller classes help kids learn?</h3>
-  <p>Tennessee's class-size lottery (Krueger 1999, <i>QJE</i>). A regression on a yes/no variable, and every number in the table: standard errors, t, p, confidence intervals, R², F-tests. Midterm review.</p>
+  <h3>Is another year of school worth it? Looking under the hood of <code>regress</code></h3>
+  <p>526 American workers in 1976 (Wooldridge's WAGE1). We run <code>regress wage educ</code> and rebuild every number in Stata's table by hand: slope, residuals, R², F, standard error, t, p and the 95% interval. In the notebook you try to beat Stata's line, then rerun the 1976 survey thousands of times to see what a standard error really measures.</p>
   <div class="links">
-    <a class="nb" href="notebooks/week-06/week06_star_notebook/">Notebook: CIs and p-values with real kids</a>
-    <a href="https://molab.marimo.io/github/iamsurajkumar/econ2228-bc-econometrics-stata-lab/blob/main/lectures/week-06/week06_star_notebook.py">Open in molab (edit &amp; run)</a>
-    <a href="lectures/week-06/Week_06_STAR.pdf">Slides</a>
-    <a href="lectures/week-06/week06_star.do">Do-file</a>
+    <a class="nb" href="notebooks/week-06/week06_hood_notebook/">Notebook: beat Stata, then rerun 1976</a>
+    <a href="https://molab.marimo.io/github/iamsurajkumar/econ2228-bc-econometrics-stata-lab/blob/main/lectures/week-06/week06_hood_notebook.py">Open in molab (edit &amp; run)</a>
+    <a href="lectures/week-06/week06-Looking-under-the-Hood-Stata.do">Do-file: every number in the table</a>
   </div>
-  <div class="note">The do-file downloads the STAR data from Harvard Dataverse (doi:10.7910/DVN/SIWH9F) the first time you run it.</div>
+  <div class="note">The do-file downloads WAGE1 with <code>bcuse</code> (and installs <code>bcuse</code> the first time), so it needs internet; there is no <code>cd</code> line to change. Step through it a few lines at a time.</div>
 </div>
 
 <div class="week">
